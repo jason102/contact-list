@@ -15,24 +15,30 @@ app.get("/", (req, res) => {
 });
 
 app.post("/addContact", async (req, res) => {
-  console.log({ body: req.body });
   try {
-    const newContact = {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      notes: req.body.notes,
-    };
+    const {
+      body: { firstName, lastName, email, phone, notes },
+    } = req;
 
     const result = await db.query(
-      "INSERT INTO contacts(name, email, phone, notes) VALUES($1, $2, $3, $4) RETURNING *",
-      [newContact.name, newContact.email, newContact.phone, newContact.notes]
+      "SELECT exists(SELECT 1 FROM contacts WHERE email = $1 OR phone = $2);",
+      [email, phone]
     );
 
-    res.json(result.rows[0]);
+    const hasContact = result.rows[0].exists;
+
+    if (hasContact) {
+      res.status(409).json("Contact already exists");
+    } else {
+      await db.query(
+        "INSERT INTO contacts(first_name, last_name, email, phone, notes) VALUES($1, $2, $3, $4, $5);",
+        [firstName, lastName, email, phone, notes]
+      );
+
+      res.status(200).json("New contact successfully added");
+    }
   } catch (e) {
     console.log(e);
-
     return res.status(400).json({ e });
   }
 });

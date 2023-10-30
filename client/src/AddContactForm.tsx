@@ -23,8 +23,22 @@ const AddContactForm: React.FC = () => {
     defaultValues: defaultFormValues,
   });
 
-  const onSubmit = (data: ContactInfo) => {
-    console.log("Submitted", data);
+  const onSubmit = async (newContact: ContactInfo) => {
+    const response = await fetch("http://localhost:8080/addContact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newContact),
+    });
+
+    const returnedMessage = await response.json();
+
+    if (response.status === 409) {
+    }
+
+    if (response.status === 200) {
+    }
+
+    console.log(returnedMessage);
   };
 
   return (
