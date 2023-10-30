@@ -7,16 +7,10 @@ import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import RHFTextField from "src/components/RHFTextField";
+import { ContactInfo } from "src/types";
+import { validateEmail } from "src/utils";
 
-type ContactFormValues = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  notes: string;
-};
-
-const defaultFormValues: ContactFormValues = {
+const defaultFormValues: ContactInfo = {
   firstName: "",
   lastName: "",
   email: "",
@@ -25,11 +19,11 @@ const defaultFormValues: ContactFormValues = {
 };
 
 const AddContactForm: React.FC = () => {
-  const { control, handleSubmit } = useForm<ContactFormValues>({
+  const { control, handleSubmit } = useForm<ContactInfo>({
     defaultValues: defaultFormValues,
   });
 
-  const onSubmit = (data: ContactFormValues) => {
+  const onSubmit = (data: ContactInfo) => {
     console.log("Submitted", data);
   };
 
@@ -44,7 +38,7 @@ const AddContactForm: React.FC = () => {
           <Typography component="h6" variant="h4" align="center">
             Add Contact
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{ pt: 5 }}>
             <Grid item xs={12} sm={6}>
               <RHFTextField
                 required
@@ -55,6 +49,10 @@ const AddContactForm: React.FC = () => {
                 autoComplete="given-name"
                 variant="standard"
                 control={control}
+                maxLength={{
+                  value: 255,
+                  message: "Name cannot exceed 255 characters",
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -67,6 +65,10 @@ const AddContactForm: React.FC = () => {
                 autoComplete="family-name"
                 variant="standard"
                 control={control}
+                maxLength={{
+                  value: 255,
+                  message: "Name cannot exceed 255 characters",
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -79,6 +81,9 @@ const AddContactForm: React.FC = () => {
                 autoComplete="email"
                 variant="standard"
                 control={control}
+                validate={(value) =>
+                  validateEmail(value) || "Please enter a valid email address"
+                }
               />
             </Grid>
             <Grid item xs={12}>
@@ -91,6 +96,10 @@ const AddContactForm: React.FC = () => {
                 autoComplete="phone"
                 variant="standard"
                 control={control}
+                maxLength={{
+                  value: 20, // Max phone number length is 15 numbers according to international standards, so give them more space to include chars like +()-
+                  message: "Please enter a valid phone number",
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -103,6 +112,10 @@ const AddContactForm: React.FC = () => {
                 multiline
                 rows={4}
                 control={control}
+                maxLength={{
+                  value: 1000, // Just to limit people submitting something unreasonably long
+                  message: "The note cannot exceed 1000 characters",
+                }}
               />
             </Grid>
           </Grid>
