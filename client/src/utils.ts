@@ -5,3 +5,18 @@ export const validateEmail = (email: string) => {
     String(email).toLowerCase()
   );
 };
+
+export const trimObjectStringValues = <T>(obj: any): T =>
+  Object.keys(obj).reduce((accumulated, nextKey) => {
+    const key = nextKey as keyof T;
+
+    return {
+      ...accumulated,
+      [key]: typeof obj[key] == "string" ? obj[key].trim() : obj[key],
+    };
+  }, {} as T);
+
+export enum HttpResponseCodes {
+  Success = 200,
+  AlreadyExists = 409,
+}

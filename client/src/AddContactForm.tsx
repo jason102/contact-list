@@ -8,7 +8,11 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import RHFTextField from "src/components/RHFTextField";
 import { ContactInfo } from "src/types";
-import { validateEmail } from "src/utils";
+import {
+  HttpResponseCodes,
+  trimObjectStringValues,
+  validateEmail,
+} from "src/utils";
 
 const defaultFormValues: ContactInfo = {
   firstName: "",
@@ -23,22 +27,35 @@ const AddContactForm: React.FC = () => {
     defaultValues: defaultFormValues,
   });
 
-  const onSubmit = async (newContact: ContactInfo) => {
-    const response = await fetch("http://localhost:8080/addContact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newContact),
-    });
+  const onSubmit = async (submittedData: ContactInfo) => {
+    const newContact = trimObjectStringValues<ContactInfo>(submittedData);
 
-    const returnedMessage = await response.json();
+    const response = await fetch(
+      `${import.meta.env.VITE_LOCALHOST_URL}/addContact`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newContact),
+      }
+    );
 
-    if (response.status === 409) {
+    switch (response.status) {
+      case HttpResponseCodes.Success: {
+        break;
+      }
+      case HttpResponseCodes.AlreadyExists: {
+        alert("Contact already exists");
+        break;
+      }
+      default: {
+        console.error(
+          `Error: server responded with status ${response.status} for request ${response.url}`
+        );
+        alert(
+          "Sorry, there was a problem. Please contact Jason to fix this bug."
+        );
+      }
     }
-
-    if (response.status === 200) {
-    }
-
-    console.log(returnedMessage);
   };
 
   return (
