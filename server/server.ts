@@ -1,12 +1,11 @@
 import express from "express";
 import cors from "cors";
 import { setupDatabase } from "./db/db-connection";
+import dotenv from "dotenv";
 
-require("dotenv").config();
-
+dotenv.config();
 const db = setupDatabase();
 const app = express();
-const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
@@ -43,6 +42,6 @@ app.post("/addContact", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Hola, Server listening on ${PORT}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Hola, Server listening on ${process.env.PORT}`);
 });
