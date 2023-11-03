@@ -8,8 +8,17 @@ import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import RHFTextField from "src/components/RHFTextField";
 import { ContactInfo } from "src/types";
-import { validateEmail } from "src/utils";
-import useStore from "src/globalState/store";
+import {
+  HttpResponseCodes,
+  trimObjectStringValues,
+  validateEmail,
+} from "src/utils";
+import {
+  useGetContactsQuery,
+  useAddContactMutation,
+  isFetchBaseQueryError,
+  isErrorWithMessage,
+} from "src/app/apiSlice";
 
 const defaultFormValues: ContactInfo = {
   firstName: "",
@@ -20,15 +29,40 @@ const defaultFormValues: ContactInfo = {
 };
 
 const AddContactForm: React.FC = () => {
-  const dispatchAddContact = useStore((state) => state.addContact);
-  // const contacts = useStore((state) => state.contacts);
+  const [addNewContact, { isLoading }] = useAddContactMutation();
 
   const { control, handleSubmit } = useForm<ContactInfo>({
     defaultValues: defaultFormValues,
   });
 
   const onSubmit = async (submittedData: ContactInfo) => {
-    dispatchAddContact(submittedData);
+    if (!isLoading) {
+      try {
+        const newContact = trimObjectStringValues<ContactInfo>(submittedData);
+        const returnedMessage = await addNewContact(newContact).unwrap();
+        alert(returnedMessage);
+      } catch (e) {
+        console.log(e);
+        if (isFetchBaseQueryError(e)) {
+          // you can access all properties of `FetchBaseQueryError` here
+          const errorMsg = "error" in e ? e.error : e.data;
+
+          if (e.status === HttpResponseCodes.AlreadyExists) {
+            alert("Contact already exists");
+          } else {
+            console.log({ errorMsg });
+          }
+        } else if (isErrorWithMessage(e)) {
+          // you can access a string 'message' property here
+          console.log({ message: e.message });
+        } else {
+          console.error(`Error: server responded with:`, e);
+          alert(
+            "Sorry, there was a problem. Please contact Jason to fix this bug."
+          );
+        }
+      }
+    }
   };
 
   return (
