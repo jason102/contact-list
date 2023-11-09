@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { setupDatabase } from "./db/db-connection";
 import dotenv from "dotenv";
+import { HttpResponseCodes } from "./utils";
 
 dotenv.config();
 const db = setupDatabase();
@@ -19,26 +20,33 @@ app.post("/addContact", async (req, res) => {
       body: { firstName, lastName, email, phone, notes },
     } = req;
 
-    const result = await db.query(
+    const selectResult = await db.query(
       "SELECT exists(SELECT 1 FROM contacts WHERE email = $1 OR phone = $2);",
       [email, phone]
     );
 
-    const hasContact = result.rows[0].exists;
+    const hasContact = selectResult.rows[0].exists;
 
     if (hasContact) {
-      res.status(409).json("Contact already exists");
+      res
+        .status(HttpResponseCodes.AlreadyExists)
+        .json("Contact already exists");
     } else {
-      await db.query(
-        "INSERT INTO contacts(first_name, last_name, email, phone, notes) VALUES($1, $2, $3, $4, $5);",
+      const insertResult = await db.query(
+        "INSERT INTO contacts(first_name, last_name, email, phone, notes) VALUES($1, $2, $3, $4, $5) RETURNING id;",
         [firstName, lastName, email, phone, notes]
       );
 
-      res.status(200).json("New contact successfully added");
+      const contactId = insertResult.rows[0].id;
+
+      res
+        .status(HttpResponseCodes.Created)
+        .location(`/contact/${contactId}`)
+        .json("Contact added");
     }
   } catch (e) {
     console.log(e);
-    return res.status(400).json({ e });
+    return res.status(HttpResponseCodes.BadRequest).json({ e });
   }
 });
 

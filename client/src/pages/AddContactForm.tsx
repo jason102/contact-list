@@ -5,6 +5,7 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import RHFTextField from "src/components/RHFTextField";
 import { ContactInfo } from "src/types";
@@ -13,12 +14,14 @@ import {
   trimObjectStringValues,
   validateEmail,
 } from "src/utils";
+import { useAddContactMutation } from "src/app/api/apiSlice";
+import { useSnackbarFetchResponse } from "src/components/FetchResultSnackbar/snackbarFetchResponseHandling";
 import {
-  useGetContactsQuery,
-  useAddContactMutation,
-  isFetchBaseQueryError,
-  isErrorWithMessage,
-} from "src/app/apiSlice";
+  FetchResultType,
+  setFetchResult,
+  setIsSnackbarOpen,
+} from "src/components/FetchResultSnackbar/fetchResultSnackbarSlice";
+import { useAppDispatch } from "src/app/store";
 
 const defaultFormValues: ContactInfo = {
   firstName: "",
@@ -29,40 +32,31 @@ const defaultFormValues: ContactInfo = {
 };
 
 const AddContactForm: React.FC = () => {
+  const dispatch = useAppDispatch();
+
   const [addNewContact, { isLoading }] = useAddContactMutation();
+  const dispatchAddNewContact = useSnackbarFetchResponse(addNewContact, {
+    [HttpResponseCodes.Created]: {
+      message: "New contact successfully added",
+      type: FetchResultType.success,
+    },
+    [HttpResponseCodes.AlreadyExists]: {
+      message:
+        "This contact already exists. Please use the edit contact function to update an existing contact's information.",
+      type: FetchResultType.warning,
+    },
+  });
 
   const { control, handleSubmit } = useForm<ContactInfo>({
     defaultValues: defaultFormValues,
   });
 
   const onSubmit = async (submittedData: ContactInfo) => {
-    if (!isLoading) {
-      try {
-        const newContact = trimObjectStringValues<ContactInfo>(submittedData);
-        const returnedMessage = await addNewContact(newContact).unwrap();
-        alert(returnedMessage);
-      } catch (e) {
-        console.log(e);
-        if (isFetchBaseQueryError(e)) {
-          // you can access all properties of `FetchBaseQueryError` here
-          const errorMsg = "error" in e ? e.error : e.data;
+    const newContact = trimObjectStringValues<ContactInfo>(submittedData);
+    const fetchResult = await dispatchAddNewContact(newContact);
 
-          if (e.status === HttpResponseCodes.AlreadyExists) {
-            alert("Contact already exists");
-          } else {
-            console.log({ errorMsg });
-          }
-        } else if (isErrorWithMessage(e)) {
-          // you can access a string 'message' property here
-          console.log({ message: e.message });
-        } else {
-          console.error(`Error: server responded with:`, e);
-          alert(
-            "Sorry, there was a problem. Please contact Jason to fix this bug."
-          );
-        }
-      }
-    }
+    dispatch(setFetchResult(fetchResult));
+    dispatch(setIsSnackbarOpen(true));
   };
 
   return (
@@ -158,8 +152,11 @@ const AddContactForm: React.FC = () => {
             </Grid>
           </Grid>
           <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-            <Button variant="contained" type="submit">
+            <Button variant="contained" type="submit" disabled={isLoading}>
               Submit
+              {isLoading && (
+                <CircularProgress size={18} color="inherit" sx={{ ml: 1 }} />
+              )}
             </Button>
           </Box>
         </form>
