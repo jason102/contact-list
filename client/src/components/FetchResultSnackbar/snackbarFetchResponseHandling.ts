@@ -23,7 +23,8 @@ export function isErrorWithMessage(
   );
 }
 
-// Returns an error message string or a successful response string
+// Returns a FetchResultSnackbar FetchResult so the snackbar shows the correct information based on the
+// triggerFunction API response data
 export const useSnackbarFetchResponse = <T>(
   [triggerFunction, { isLoading }]: UseMutationHookReturnType,
   httpResponseCodeMessageMap?: {

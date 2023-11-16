@@ -23,14 +23,6 @@ import {
 } from "src/components/FetchResultSnackbar/fetchResultSnackbarSlice";
 import { useAppDispatch } from "src/app/store";
 
-const defaultFormValues: ContactInfo = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  notes: "",
-};
-
 const AddContactForm: React.FC = () => {
   const dispatch = useAppDispatch();
 
@@ -48,7 +40,13 @@ const AddContactForm: React.FC = () => {
     });
 
   const { control, handleSubmit } = useForm<ContactInfo>({
-    defaultValues: defaultFormValues,
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      notes: "",
+    },
   });
 
   const onSubmit = async (submittedData: ContactInfo) => {
