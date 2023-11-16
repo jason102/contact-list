@@ -1,16 +1,9 @@
-import {
-  FetchBaseQueryError,
-  MutationActionCreatorResult,
-  MutationDefinition,
-  BaseQueryFn,
-  FetchArgs,
-  FetchBaseQueryMeta,
-} from "@reduxjs/toolkit/query";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import {
   FetchResult,
   FetchResultType,
 } from "src/components/FetchResultSnackbar/fetchResultSnackbarSlice";
-import { TransformedResponse } from "src/app/api/apiSlice";
+import { UseMutationHookReturnType } from "src/types";
 
 // Copied from RTK docs for typing caught errors
 export function isFetchBaseQueryError(
@@ -32,27 +25,11 @@ export function isErrorWithMessage(
 
 // Returns an error message string or a successful response string
 export const useSnackbarFetchResponse = <T>(
-  triggerFunction: (
-    payload: T
-  ) => MutationActionCreatorResult<
-    MutationDefinition<
-      T,
-      BaseQueryFn<
-        string | FetchArgs,
-        unknown,
-        FetchBaseQueryError,
-        object,
-        FetchBaseQueryMeta
-      >,
-      string,
-      TransformedResponse,
-      string
-    >
-  >,
+  [triggerFunction, { isLoading }]: UseMutationHookReturnType,
   httpResponseCodeMessageMap?: {
     [responseCode: number]: FetchResult;
   }
-) => {
+): [(payload: T) => Promise<FetchResult>, { isLoading: boolean }] => {
   const dispatchMutation = async (payload: T): Promise<FetchResult> => {
     try {
       const { message, status } = await triggerFunction(payload).unwrap();
@@ -102,5 +79,5 @@ export const useSnackbarFetchResponse = <T>(
     }
   };
 
-  return dispatchMutation;
+  return [dispatchMutation, { isLoading }];
 };

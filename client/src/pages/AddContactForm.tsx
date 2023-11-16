@@ -34,18 +34,18 @@ const defaultFormValues: ContactInfo = {
 const AddContactForm: React.FC = () => {
   const dispatch = useAppDispatch();
 
-  const [addNewContact, { isLoading }] = useAddContactMutation();
-  const dispatchAddNewContact = useSnackbarFetchResponse(addNewContact, {
-    [HttpResponseCodes.Created]: {
-      message: "New contact successfully added",
-      type: FetchResultType.success,
-    },
-    [HttpResponseCodes.AlreadyExists]: {
-      message:
-        "This contact already exists. Please use the edit contact function to update an existing contact's information.",
-      type: FetchResultType.warning,
-    },
-  });
+  const [dispatchAddNewContact, { isLoading }] =
+    useSnackbarFetchResponse<ContactInfo>(useAddContactMutation(), {
+      [HttpResponseCodes.Created]: {
+        message: "New contact successfully added",
+        type: FetchResultType.success,
+      },
+      [HttpResponseCodes.AlreadyExists]: {
+        message:
+          "This contact already exists. Please use the edit contact function to update an existing contact's information.",
+        type: FetchResultType.warning,
+      },
+    });
 
   const { control, handleSubmit } = useForm<ContactInfo>({
     defaultValues: defaultFormValues,

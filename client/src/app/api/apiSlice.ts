@@ -1,8 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { ContactInfo } from "src/types";
+import { ContactInfo, TransformedResponse } from "src/types";
 import { HttpResponseCodes } from "src/utils";
-
-export type TransformedResponse = { status: number; message: string };
 
 export const apiSlice = createApi({
   reducerPath: "api",
