@@ -1,12 +1,12 @@
 import express from "express";
 import cors from "cors";
 import { setupDatabase } from "./db/db-connection";
+import dotenv from "dotenv";
+import { HttpResponseCodes } from "./utils";
 
-require("dotenv").config();
-
+dotenv.config();
 const db = setupDatabase();
 const app = express();
-const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
@@ -15,28 +15,41 @@ app.get("/", (req, res) => {
 });
 
 app.post("/addContact", async (req, res) => {
-  console.log({ body: req.body });
   try {
-    const newContact = {
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      notes: req.body.notes,
-    };
+    const {
+      body: { firstName, lastName, email, phone, notes },
+    } = req;
 
-    const result = await db.query(
-      "INSERT INTO contacts(name, email, phone, notes) VALUES($1, $2, $3, $4) RETURNING *",
-      [newContact.name, newContact.email, newContact.phone, newContact.notes]
+    const selectResult = await db.query(
+      "SELECT exists(SELECT 1 FROM contacts WHERE email = $1 OR phone = $2);",
+      [email, phone]
     );
 
-    res.json(result.rows[0]);
+    const hasContact = selectResult.rows[0].exists;
+
+    if (hasContact) {
+      res
+        .status(HttpResponseCodes.AlreadyExists)
+        .json("Contact already exists");
+    } else {
+      const insertResult = await db.query(
+        "INSERT INTO contacts(first_name, last_name, email, phone, notes) VALUES($1, $2, $3, $4, $5) RETURNING id;",
+        [firstName, lastName, email, phone, notes]
+      );
+
+      const contactId = insertResult.rows[0].id;
+
+      res
+        .status(HttpResponseCodes.Created)
+        .location(`/contact/${contactId}`)
+        .json("Contact added");
+    }
   } catch (e) {
     console.log(e);
-
-    return res.status(400).json({ e });
+    return res.status(HttpResponseCodes.BadRequest).json({ e });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Hola, Server listening on ${PORT}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Hola, Server listening on ${process.env.PORT}`);
 });
